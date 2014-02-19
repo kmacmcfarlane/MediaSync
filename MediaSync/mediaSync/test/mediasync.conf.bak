@@ -1,0 +1,25 @@
+{
+	"source": {
+		"name": "btn",
+		"uri": "https://broadcasthe.net/feeds.php?feed=torrents_episode&user=1485399&auth=4944d992c85b5ff93f1bb715ad68c671&passkey=tkfh3yf4o60c8nlyxny0x7lrqpg77k1a&authkey=ff9be6ee72a2a26d365f4454a98db5f6",
+		"passkey": "123abc",
+		"directory": "/mediaz/torrents/startTv/",
+		"filters": "nameRegex,resolutionRegex"
+	},
+	"destination": {
+		"name": "tv",
+		"directory": "/mediaz/video/tv/"
+	},
+	"filters": {
+		"nameRegex": {
+			"file": "/mediaz/torrents/filter.txt",
+			"type": "regex",
+			"property": "title"
+		},
+		"resolutionRegex": {
+			"expression": "\\[\\ 720p\\ \\]",
+			"type": "regex",
+			"property": "title"
+		}
+	}
+}
