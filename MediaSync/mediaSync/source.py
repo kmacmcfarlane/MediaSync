@@ -5,4 +5,4 @@ class Source(object):
         self.uri = sourceConfiguration["uri"]
         self.directory = sourceConfiguration["directory"]
         self.filters = sourceConfiguration["filters"]
-        self.destinationName = sourceConfiguration["destinationName"]
+        self.defaultDestination = sourceConfiguration["defaultDestination"]

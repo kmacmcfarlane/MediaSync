@@ -7,6 +7,9 @@ class Filter(object):
     def __init__(self, rawConfiguration, name):
         
         self.name = name
+        
+        if "destination" in rawConfiguration:
+            self.destination = rawConfiguration["destination"]
             
         if "file" in rawConfiguration:
             self.file = rawConfiguration["file"]

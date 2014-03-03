@@ -19,6 +19,8 @@ import time
 import copy
 from urllib.parse import urlparse
 from mediaSync.item import Item
+from mediaSync.test.mockHttpClientFactory import MockHttpClientFactory
+from mediaSync.test.mockSqlLiteClientFactory import MockSqlLiteClientFactory
 
 class TestMediaSync(unittest.TestCase):
     
@@ -45,10 +47,10 @@ class TestMediaSync(unittest.TestCase):
 
         self.assertEqual("btn", configuration.sources["btn"].name, "The source must contain the correct name.")
         self.assertEqual("https://broadcasthe.net/feeds.php?feed=torrents_episode&user=1485399&auth=4944d992c85b5ff93f1bb715ad68c671&passkey=tkfh3yf4o60c8nlyxny0x7lrqpg77k1a&authkey=ff9be6ee72a2a26d365f4454a98db5f6", configuration.sources["btn"].uri, "The source must contain the correct URI.")
-        self.assertEqual("/mediaz/torrents/startTv/", configuration.sources["btn"].directory, "The source must contain the correct descriptor directory.")
+        self.assertEqual("start.tv", configuration.sources["btn"].directory, "The source must contain the correct descriptor directory.")
         
         self.assertEqual("tv", configuration.destinations["tv"].name, "The destination must contain the correct name.")
-        self.assertEqual("/mediaz/video/tv/", configuration.destinations["tv"].directory, "The destination must contain the correct URI.")
+        self.assertEqual("download.tv", configuration.destinations["tv"].directory, "The destination must contain the correct URI.")
 
         self.assertTrue(len(configuration.filters) > 0)
         
@@ -73,7 +75,7 @@ class TestMediaSync(unittest.TestCase):
         
         self.assertEqual("btn", source.name)
         self.assertEqual("https://broadcasthe.net/feeds.php?feed=torrents_episode&user=1485399&auth=4944d992c85b5ff93f1bb715ad68c671&passkey=tkfh3yf4o60c8nlyxny0x7lrqpg77k1a&authkey=ff9be6ee72a2a26d365f4454a98db5f6", source.uri)
-        self.assertEqual("/mediaz/torrents/startTv/", source.directory)
+        self.assertEqual("start.tv", source.directory)
         self.assertEqual("nameRegex,resolutionRegex", source.filters)
         
         
@@ -84,7 +86,7 @@ class TestMediaSync(unittest.TestCase):
         
         self.assertEqual("btn", app.sources["btn"].name)
         self.assertEqual("https://broadcasthe.net/feeds.php?feed=torrents_episode&user=1485399&auth=4944d992c85b5ff93f1bb715ad68c671&passkey=tkfh3yf4o60c8nlyxny0x7lrqpg77k1a&authkey=ff9be6ee72a2a26d365f4454a98db5f6", app.sources["btn"].uri)
-        self.assertEqual("/mediaz/torrents/startTv/", app.sources["btn"].directory)
+        self.assertEqual("start.tv", app.sources["btn"].directory)
         self.assertEqual("nameRegex,resolutionRegex", app.sources["btn"].filters)
         
     def testLoadDestination(self):
@@ -96,7 +98,7 @@ class TestMediaSync(unittest.TestCase):
         destination = Destination(rawConfiguration["destinations"]["tv"], "tv")
         
         self.assertEqual("tv", destination.name)
-        self.assertEqual("/mediaz/video/tv/", destination.directory)
+        self.assertEqual("download.tv", destination.directory)
         
         
         globalContext = Bootstraper()
@@ -104,8 +106,8 @@ class TestMediaSync(unittest.TestCase):
         
         app = globalContext.app
         
-        self.assertEqual("tv", app.destinations["tv"].name)
-        self.assertEqual("/mediaz/video/tv/", app.destinations["tv"].directory)
+        self.assertEqual("tv", destination.name)
+        self.assertEqual("download.tv", destination.directory)
     
     def testLoadFilter(self):
         configuration = Configuration("./")
@@ -327,7 +329,44 @@ class TestMediaSync(unittest.TestCase):
         
     def testCheckExisting(self):
         
-        self.assertFalse(True, "Implement me!")
+        globalContext = Bootstraper()
+        globalContext.boot()
+        
+        app = globalContext.app
+
+        items = []
+        
+        item = self.createPositiveItem()
+        
+        items.append(item)
+        
+        otherItem = copy.copy(item)
+        items.append(item)
+        items.append(self.createNegativeItem())
+        
+        source = next(iter(app.sources.values()))
+        destination = next(iter(app.destinations.values()))
+        firstFilter = app.filters["nameRegex"]
+    
+        self.assertEqual("tv", destination.name)
+        self.assertEqual(destination.name, source.defaultDestination)
+        self.assertEqual(destination.name, firstFilter.destination)
+        
+        self.assertEqual("start.tv", source.directory)
+        self.assertEqual("download.tv", destination.directory)
+        
+        app.sqlLiteClientFactory = MockSqlLiteClientFactory()
+        
+        exists = app.checkExists(item)
+        
+        self.assertFalse(exists, "Item shall not exist before it is marked downloaded.");
+        
+        app.markDownloaded(item)
+        
+        exists = app.checkExists(item)
+        
+        self.assertTrue(exists)
+        
     
     def testDownloadDescriptor(self):
         
